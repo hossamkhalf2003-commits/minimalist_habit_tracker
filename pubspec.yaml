@@ -1,0 +1,63 @@
+name: minimalist_habit_tracker
+description: A clean, minimalist habit tracking application.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The icons used in the app
+  cupertino_icons: ^1.0.6
+  # Your router
+  go_router: ^13.0.0
+  # Data persistence
+  shared_preferences: ^2.2.0
+  # For SVG handling if you decide to use custom SVG assets later
+  flutter_svg: ^2.0.10
+  
+  # --- NEW FUNCTIONALITY ---
+  # Date formatting & internationalization
+  intl: ^0.19.0
+  # Local Notifications (Reminders)
+  flutter_local_notifications: ^17.0.0
+  # Timezone handling (Required for scheduled notifications)
+  timezone: ^0.9.2
+  fl_chart: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  
+  # --- PROFESSIONAL TOOLS ---
+  
+  # 1. Run: dart run flutter_launcher_icons
+  flutter_launcher_icons: ^0.13.1
+  
+  # 2. Run: dart run flutter_native_splash:create
+  flutter_native_splash: ^2.3.1
+
+# Configuration for App Icons
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/app_icon.png" # You must add this image to your project folder
+  min_sdk_android: 21
+
+# Configuration for Splash Screen
+flutter_native_splash:
+  color: "#F1F5F9" # Matches AppColors.background
+  color_dark: "#0F172A" # Matches AppColors.darkBackground
+  image: "assets/splash/splash_logo.png" # You must add this image
+  android_12:
+    color: "#F1F5F9"
+    color_dark: "#0F172A"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/
+    - assets/splash/
