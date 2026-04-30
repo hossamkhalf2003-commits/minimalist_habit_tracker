@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'router/app_router.dart';
 import 'theme/app_colors.dart';
 import 'theme/theme_manager.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const HabitTrackerApp());
 }
 
@@ -25,45 +27,40 @@ class _HabitTrackerAppState extends State<HabitTrackerApp> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: themeManager,
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp.router(
-          title: 'Minimalist Habit Tracker',
-          debugShowCheckedModeBanner: false,
-
-          // Light Theme
-          theme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.light,
-            scaffoldBackgroundColor: AppColors.background,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primary,
-              primary: AppColors.primary,
-              surface: AppColors.surface,
-              brightness: Brightness.light,
-            ),
-            fontFamily: 'Roboto',
-          ),
-
-          // Dark Theme
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            brightness: Brightness.dark,
-            scaffoldBackgroundColor: AppColors.background,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primary,
-              primary: AppColors.primary,
-              surface: AppColors.surface,
-              brightness: Brightness.dark,
-            ),
-            fontFamily: 'Roboto',
-          ),
-
-          themeMode: themeManager.themeMode,
-          routerConfig: appRouter,
+        return AnimatedBuilder(
+          animation: themeManager,
+          builder: (context, _) {
+            return MaterialApp.router(
+              title: 'Minimalist Habit Tracker',
+              debugShowCheckedModeBanner: false,
+              themeMode: themeManager.themeMode,
+              theme: _buildTheme(Brightness.light),
+              darkTheme: _buildTheme(Brightness.dark),
+              routerConfig: appRouter,
+            );
+          },
         );
       },
+    );
+  }
+
+  ThemeData _buildTheme(Brightness brightness) {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: brightness,
+      scaffoldBackgroundColor: AppColors.background,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        primary: AppColors.primary,
+        surface: AppColors.surface,
+        brightness: brightness,
+      ),
+      fontFamily: 'Roboto',
     );
   }
 }

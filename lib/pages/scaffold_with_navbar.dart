@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
 import '../data/habit_manager.dart';
@@ -12,59 +13,68 @@ class ScaffoldWithNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final navBarColor = isDark ? AppColors.surface : Colors.white;
-    final selectedItemColor =
-        isDark ? AppColors.primary : AppColors.primary;
-    final unselectedItemColor =
-        isDark ? AppColors.secondary : AppColors.secondary;
-    final fabBackgroundColor =
-        isDark ? AppColors.primary : AppColors.primary;
     final fabContentColor = isDark ? AppColors.background : Colors.white;
+    final currentIndex = _calculateSelectedIndex(context);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.background : AppColors.background,
-      body: child,
+      backgroundColor: AppColors.background,
+      // Wrap body in SafeArea, explicitly protecting the top (status bar/notch)
+      // We set bottom: false because the BottomNavigationBar handles its own safe area.
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: child,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: navBarColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
-              blurRadius: 20,
+              blurRadius: 20.r,
             ),
           ],
         ),
         child: BottomNavigationBar(
           backgroundColor: navBarColor,
           elevation: 0,
-          selectedItemColor: selectedItemColor,
-          unselectedItemColor: unselectedItemColor,
-          currentIndex: _calculateSelectedIndex(context),
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.secondary,
+          selectedFontSize: 12.sp,
+          unselectedFontSize: 12.sp,
+          currentIndex: currentIndex,
           onTap: (index) => _onItemTapped(index, context),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded),
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.grid_view_rounded, size: 24.sp),
+              ),
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_rounded),
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Icon(Icons.calendar_month_rounded, size: 24.sp),
+              ),
               label: 'Calendar',
             ),
           ],
         ),
       ),
-      floatingActionButton: _calculateSelectedIndex(context) == 0
+      floatingActionButton: currentIndex == 0
           ? FloatingActionButton.extended(
               onPressed: () => showHabitDialog(context),
-              backgroundColor: fabBackgroundColor,
+              backgroundColor: AppColors.primary,
               elevation: 4,
-              icon: Icon(Icons.add_rounded, color: fabContentColor),
+              icon: Icon(Icons.add_rounded, color: fabContentColor, size: 22.sp),
               label: Text(
                 "New Habit",
                 style: TextStyle(
                   color: fabContentColor,
                   fontWeight: FontWeight.w600,
+                  fontSize: 14.sp,
                 ),
               ),
             )
@@ -74,304 +84,277 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/calendar')) return 1;
-    return 0;
+    return location.startsWith('/calendar') ? 1 : 0;
   }
 
   void _onItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        context.go('/home');
-        break;
-      case 1:
-        context.go('/calendar');
-        break;
-    }
+    context.go(index == 0 ? '/home' : '/calendar');
   }
 
   static void showHabitDialog(BuildContext context, {Habit? habitToEdit}) {
-    final TextEditingController controller =
-        TextEditingController(text: habitToEdit?.name ?? '');
-    TimeOfDay? selectedTime;
-    List<int> selectedDays = habitToEdit?.frequency ?? [1, 2, 3, 4, 5, 6, 7];
-    HabitCategory selectedCategory =
-        habitToEdit?.category ?? HabitCategory.personal;
-
-    if (habitToEdit?.reminderTime != null) {
-      try {
-        final parts = habitToEdit!.reminderTime!.split(':');
-        selectedTime =
-            TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-      } catch (e) {
-        // ignore error
-      }
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          final dialogBg = isDark ? AppColors.surface : Colors.white;
-          final textColor = isDark ? AppColors.primary : AppColors.primary;
-          final inputFill =
-              isDark ? AppColors.background : AppColors.background;
-          final hintColor = isDark ? AppColors.secondary : Colors.grey;
-          final primaryColor =
-              isDark ? AppColors.primary : AppColors.primary;
+      builder: (context) => _HabitDialog(habitToEdit: habitToEdit),
+    );
+  }
+}
 
-          return AlertDialog(
-            backgroundColor: dialogBg,
-            surfaceTintColor: Colors.transparent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(
-              habitToEdit == null ? 'New Commitment' : 'Edit Habit',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                color: textColor,
-              ),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: controller,
-                    autofocus: true,
-                    style: TextStyle(color: textColor),
-                    decoration: InputDecoration(
-                      hintText: 'e.g., Meditate...',
-                      hintStyle: TextStyle(color: hintColor),
-                      filled: true,
-                      fillColor: inputFill,
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+class _HabitDialog extends StatefulWidget {
+  final Habit? habitToEdit;
 
-                  // Frequency Selector
-                  Text(
-                    "Frequency",
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.secondary
-                          : AppColors.secondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-                        .asMap()
-                        .entries
-                        .map((entry) {
-                      final dayIndex = entry.key + 1;
-                      final isSelected = selectedDays.contains(dayIndex);
+  const _HabitDialog({this.habitToEdit});
 
-                      return InkWell(
-                        onTap: () {
-                          setState(() {
-                            if (isSelected) {
-                              if (selectedDays.length > 1)
-                                selectedDays.remove(dayIndex);
-                            } else {
-                              selectedDays.add(dayIndex);
-                            }
-                          });
-                        },
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: isSelected ? primaryColor : inputFill,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            entry.value,
-                            style: TextStyle(
-                              // Fix: Ensure text is readable on selected BG
-                              color: isSelected
-                                  ? (isDark
-                                      ? AppColors.background
-                                      : Colors.white)
-                                  : hintColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+  @override
+  State<_HabitDialog> createState() => _HabitDialogState();
+}
 
-                  const SizedBox(height: 16),
+class _HabitDialogState extends State<_HabitDialog> {
+  late final TextEditingController _controller;
+  TimeOfDay? _selectedTime;
+  late List<int> _selectedDays;
+  late HabitCategory _selectedCategory;
 
-                  // Category Selector
-                  Text(
-                    "Category",
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.secondary
-                          : AppColors.secondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: HabitCategory.values
-                        .where((c) => c != HabitCategory.all)
-                        .map((cat) {
-                      final isSelected = selectedCategory == cat;
-                      return ChoiceChip(
-                        label: Text(
-                          cat.name[0].toUpperCase() + cat.name.substring(1),
-                          style: TextStyle(
-                            fontSize: 12,
-                            // FIX: If selected in Dark Mode (BG is light), Text must be Dark
-                            color: isSelected
-                                ? (isDark
-                                    ? AppColors.background
-                                    : Colors.white)
-                                : textColor,
-                          ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: primaryColor,
-                        backgroundColor: inputFill,
-                        side: BorderSide.none,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                        onSelected: (selected) {
-                          if (selected) setState(() => selectedCategory = cat);
-                        },
-                      );
-                    }).toList(),
-                  ),
+  @override
+  void initState() {
+    super.initState();
+    final habit = widget.habitToEdit;
+    
+    _controller = TextEditingController(text: habit?.name ?? '');
+    _selectedDays = List.from(habit?.frequency ?? [1, 2, 3, 4, 5, 6, 7]);
+    _selectedCategory = habit?.category ?? HabitCategory.personal;
 
-                  const SizedBox(height: 16),
+    if (habit?.reminderTime != null) {
+      try {
+        final parts = habit!.reminderTime!.split(':');
+        _selectedTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      } catch (_) {
+        // Fallback to null on parse error
+      }
+    }
+  }
 
-                  // Reminder Selector
-                  Text(
-                    "Reminder (Optional)",
-                    style: TextStyle(
-                      color: isDark
-                          ? AppColors.secondary
-                          : AppColors.secondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final TimeOfDay? picked = await showTimePicker(
-                        context: context,
-                        initialTime: selectedTime ?? TimeOfDay.now(),
-                        builder: (context, child) {
-                          return Theme(
-                            data: isDark ? ThemeData.dark() : ThemeData.light(),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          selectedTime = picked;
-                        });
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: inputFill,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.notifications_outlined,
-                              color: selectedTime != null
-                                  ? AppColors.palette[0]
-                                  : hintColor,
-                              size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            selectedTime != null
-                                ? selectedTime!.format(context)
-                                : "Set a time",
-                            style: TextStyle(
-                              color:
-                                  selectedTime != null ? textColor : hintColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          if (selectedTime != null) ...[
-                            const Spacer(),
-                            InkWell(
-                              onTap: () => setState(() => selectedTime = null),
-                              child:
-                                  Icon(Icons.close, size: 16, color: hintColor),
-                            )
-                          ]
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel',
-                    style: TextStyle(
-                        color: isDark ? Colors.grey[400] : Colors.grey)),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (controller.text.trim().isNotEmpty) {
-                    if (habitToEdit == null) {
-                      HabitManager().addHabit(controller.text.trim(),
-                          selectedTime, selectedDays, selectedCategory);
-                    } else {
-                      HabitManager().editHabit(
-                          habitToEdit.id,
-                          controller.text.trim(),
-                          selectedTime,
-                          selectedDays,
-                          selectedCategory);
-                    }
-                    Navigator.pop(context);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isDark ? AppColors.primary : AppColors.primary,
-                  foregroundColor:
-                      isDark ? AppColors.background : Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleDay(int dayIndex) {
+    setState(() {
+      if (_selectedDays.contains(dayIndex)) {
+        if (_selectedDays.length > 1) _selectedDays.remove(dayIndex);
+      } else {
+        _selectedDays.add(dayIndex);
+      }
+    });
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
+  }
+
+  void _saveHabit() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+
+    final manager = HabitManager();
+    if (widget.habitToEdit == null) {
+      manager.addHabit(text, _selectedTime, _selectedDays, _selectedCategory);
+    } else {
+      manager.editHabit(widget.habitToEdit!.id, text, _selectedTime, _selectedDays, _selectedCategory);
+    }
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? AppColors.surface : Colors.white;
+    final primaryColor = AppColors.primary;
+    final hintColor = isDark ? AppColors.secondary : Colors.grey;
+
+    return AlertDialog(
+      backgroundColor: dialogBg,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+      title: Text(
+        widget.habitToEdit == null ? 'New Commitment' : 'Edit Habit',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20.sp, color: primaryColor),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              style: TextStyle(color: primaryColor, fontSize: 16.sp),
+              decoration: InputDecoration(
+                hintText: 'e.g., Meditate...',
+                hintStyle: TextStyle(color: hintColor, fontSize: 16.sp),
+                filled: true,
+                fillColor: AppColors.background,
+                contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide.none,
                 ),
-                child:
-                    Text(habitToEdit == null ? 'Start Habit' : 'Save Changes'),
               ),
-            ],
-          );
-        },
+            ),
+            SizedBox(height: 16.h),
+            _buildSectionLabel("Frequency"),
+            _buildFrequencySelector(isDark, hintColor),
+            SizedBox(height: 16.h),
+            _buildSectionLabel("Category"),
+            _buildCategorySelector(isDark, primaryColor),
+            SizedBox(height: 16.h),
+            _buildSectionLabel("Reminder (Optional)"),
+            _buildReminderSelector(hintColor),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey, fontSize: 14.sp)),
+        ),
+        ElevatedButton(
+          onPressed: _saveHabit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryColor,
+            foregroundColor: isDark ? AppColors.background : Colors.white,
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+          ),
+          child: Text(
+            widget.habitToEdit == null ? 'Start Habit' : 'Save Changes',
+            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionLabel(String text) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: AppColors.secondary,
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFrequencySelector(bool isDark, Color hintColor) {
+    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: days.asMap().entries.map((entry) {
+        final dayIndex = entry.key + 1;
+        final isSelected = _selectedDays.contains(dayIndex);
+
+        return InkWell(
+          onTap: () => _toggleDay(dayIndex),
+          borderRadius: BorderRadius.circular(30.r),
+          child: Container(
+            // Use .w for both width and height to ensure a perfect circle regardless of aspect ratio
+            width: 32.w,
+            height: 32.w,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primary : AppColors.background,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              entry.value,
+              style: TextStyle(
+                color: isSelected 
+                    ? (isDark ? AppColors.background : Colors.white) 
+                    : hintColor,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildCategorySelector(bool isDark, Color primaryColor) {
+    return Wrap(
+      spacing: 8.w,
+      runSpacing: 8.h,
+      children: HabitCategory.values.where((c) => c != HabitCategory.all).map((cat) {
+        final isSelected = _selectedCategory == cat;
+        return ChoiceChip(
+          label: Text(
+            cat.name[0].toUpperCase() + cat.name.substring(1),
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: isSelected ? (isDark ? AppColors.background : Colors.white) : primaryColor,
+            ),
+          ),
+          selected: isSelected,
+          selectedColor: primaryColor,
+          backgroundColor: AppColors.background,
+          side: BorderSide.none,
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+          onSelected: (selected) {
+            if (selected) setState(() => _selectedCategory = cat);
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildReminderSelector(Color hintColor) {
+    return InkWell(
+      onTap: _pickTime,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.notifications_outlined,
+              color: _selectedTime != null ? AppColors.palette[0] : hintColor,
+              size: 20.sp,
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              _selectedTime != null ? _selectedTime!.format(context) : "Set a time",
+              style: TextStyle(
+                color: _selectedTime != null ? AppColors.primary : hintColor,
+                fontWeight: FontWeight.w500,
+                fontSize: 14.sp,
+              ),
+            ),
+            if (_selectedTime != null) ...[
+              const Spacer(),
+              InkWell(
+                onTap: () => setState(() => _selectedTime = null),
+                child: Icon(Icons.close, size: 18.sp, color: hintColor),
+              )
+            ]
+          ],
+        ),
       ),
     );
   }

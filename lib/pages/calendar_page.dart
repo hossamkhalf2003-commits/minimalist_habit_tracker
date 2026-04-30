@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // Added ScreenUtil
 import '../theme/app_colors.dart';
 import '../data/habit_manager.dart';
 
+// --- PURE HELPER FUNCTIONS ---
+String _dateToString(int year, int month, int day) {
+  return "$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}";
+}
+
+int _getDaysInMonth(DateTime date) => DateTime(date.year, date.month + 1, 0).day;
+
+int _getFirstWeekdayOfMonth(DateTime date) {
+  final firstDay = DateTime(date.year, date.month, 1);
+  return firstDay.weekday == 7 ? 0 : firstDay.weekday; // 0 = Sunday, 1 = Monday...
+}
+
+const _monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+// --- MAIN WIDGET ---
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
 
@@ -13,197 +33,214 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime _focusedMonth = DateTime.now();
   final manager = HabitManager();
 
-  int _getDaysInMonth(DateTime date) =>
-      DateTime(date.year, date.month + 1, 0).day;
-
-  int _getFirstWeekdayOfMonth(DateTime date) {
-    final firstDay = DateTime(date.year, date.month, 1);
-    return firstDay.weekday == 7 ? 0 : firstDay.weekday;
-  }
-
   void _changeMonth(int offset) {
+    HapticFeedback.lightImpact();
     setState(() {
-      _focusedMonth = DateTime(
-        _focusedMonth.year,
-        _focusedMonth.month + offset,
-      );
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + offset);
     });
   }
 
-  String _getMonthName(int month) {
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    return months[month - 1];
-  }
+  /// Pre-calculates the habit colors for the current month.
+  /// Prevents iterating through the entire habit history 31 times per frame.
+  Map<String, List<Color>> _getMonthlyDotsMap() {
+    final Map<String, List<Color>> dotsPerDay = {};
+    final monthPrefix = "${_focusedMonth.year}-${_focusedMonth.month.toString().padLeft(2, '0')}";
 
-  String _dateToString(int year, int month, int day) {
-    return "$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}";
+    for (var habit in manager.habits) {
+      final color = Color(habit.colorValue);
+      // Only process dates that match the currently focused month
+      final currentMonthDates = habit.completedDates.where((d) => d.startsWith(monthPrefix));
+      
+      for (var dateStr in currentMonthDates) {
+        dotsPerDay.putIfAbsent(dateStr, () => []).add(color);
+      }
+    }
+    return dotsPerDay;
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedBuilder(
       animation: manager,
       builder: (context, child) {
-        final habits = manager.habits;
         final int daysInMonth = _getDaysInMonth(_focusedMonth);
         final int firstWeekday = _getFirstWeekdayOfMonth(_focusedMonth);
+        
+        // Pre-calculate data for O(1) lookup inside the builder
+        final monthlyDots = _getMonthlyDotsMap(); 
+        final now = DateTime.now();
 
-        return Column(
-          children: [
-            _buildHeader(),
-            _buildDaysOfWeek(),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  childAspectRatio: 0.8,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
+        return Container(
+          color: AppColors.background,
+          child: SafeArea(
+            top: true,
+            bottom: false,
+            child: Column(
+              children: [
+                _buildHeader(isDark),
+                _buildDaysOfWeek(isDark),
+                Expanded(
+                  child: GridView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      childAspectRatio: 0.8,
+                      mainAxisSpacing: 8.h,
+                      crossAxisSpacing: 8.w,
+                    ),
+                    itemCount: daysInMonth + firstWeekday,
+                    itemBuilder: (context, index) {
+                      if (index < firstWeekday) return const SizedBox.shrink();
+
+                      final int day = index - firstWeekday + 1;
+                      final String dateStr = _dateToString(_focusedMonth.year, _focusedMonth.month, day);
+                      
+                      final isToday = day == now.day && 
+                                      _focusedMonth.month == now.month && 
+                                      _focusedMonth.year == now.year;
+
+                      return _CalendarDayCell(
+                        day: day,
+                        isToday: isToday,
+                        isDark: isDark,
+                        dotColors: monthlyDots[dateStr] ?? const [],
+                      );
+                    },
+                  ),
                 ),
-                itemCount: daysInMonth + firstWeekday,
-                itemBuilder: (context, index) {
-                  if (index < firstWeekday) return const SizedBox();
-
-                  final int day = index - firstWeekday + 1;
-                  final String dateStr = _dateToString(
-                    _focusedMonth.year,
-                    _focusedMonth.month,
-                    day,
-                  );
-
-                  final completedHabits = habits
-                      .where((h) => h.completedDates.contains(dateStr))
-                      .toList();
-
-                  final isToday =
-                      day == DateTime.now().day &&
-                      _focusedMonth.month == DateTime.now().month &&
-                      _focusedMonth.year == DateTime.now().year;
-
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: isToday
-                          ? Border.all(color: AppColors.primary, width: 2)
-                          : Border.all(color: Colors.transparent),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '$day',
-                          style: TextStyle(
-                            fontWeight: isToday
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: isToday
-                                ? AppColors.primary
-                                : AppColors.secondary,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        if (completedHabits.isNotEmpty)
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 2,
-                            runSpacing: 2,
-                            children: completedHabits
-                                .map(
-                                  (habit) => Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: Color(habit.colorValue),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDark) {
+    final textColor = isDark ? AppColors.primary : Colors.black87;
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 16.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             onPressed: () => _changeMonth(-1),
-            icon:  Icon(Icons.chevron_left, color: AppColors.primary),
+            icon: Icon(Icons.chevron_left_rounded, color: AppColors.primary, size: 28.sp),
           ),
           Text(
-            '${_getMonthName(_focusedMonth.month)} ${_focusedMonth.year}',
-            style:  TextStyle(
-              fontSize: 18,
+            '${_monthNames[_focusedMonth.month - 1]} ${_focusedMonth.year}',
+            style: TextStyle(
+              fontSize: 18.sp,
               fontWeight: FontWeight.bold,
-              color: AppColors.surface,
+              color: textColor,
+              letterSpacing: 0.5,
             ),
           ),
           IconButton(
             onPressed: () => _changeMonth(1),
-            icon:  Icon(Icons.chevron_right, color: AppColors.primary),
+            icon: Icon(Icons.chevron_right_rounded, color: AppColors.primary, size: 28.sp),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDaysOfWeek() {
+  Widget _buildDaysOfWeek(bool isDark) {
     const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: days
-            .map(
-              (d) => SizedBox(
-                width: 30,
-                child: Text(
-                  d,
-                  textAlign: TextAlign.center,
-                  style:  TextStyle(
-                    color: AppColors.secondary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+        children: days.map((d) => SizedBox(
+          width: 30.w,
+          child: Text(
+            d,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isDark ? Colors.grey[500] : AppColors.secondary,
+              fontWeight: FontWeight.bold,
+              fontSize: 13.sp,
+            ),
+          ),
+        )).toList(),
+      ),
+    );
+  }
+}
+
+// --- EXTRACTED DAY CELL WIDGET ---
+class _CalendarDayCell extends StatelessWidget {
+  final int day;
+  final bool isToday;
+  final bool isDark;
+  final List<Color> dotColors;
+
+  const _CalendarDayCell({
+    required this.day,
+    required this.isToday,
+    required this.isDark,
+    required this.dotColors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isDark ? AppColors.surface : Colors.white;
+    final textColor = isToday 
+        ? AppColors.primary 
+        : (isDark ? Colors.grey[300] : Colors.black87);
+
+    // Limit to 6 dots to prevent layout overflow in small cells
+    final displayDots = dotColors.take(6).toList();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14.r),
+        border: isToday
+            ? Border.all(color: AppColors.primary.withOpacity(0.5), width: 2.w)
+            : Border.all(color: Colors.transparent),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+            blurRadius: 8.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$day',
+            style: TextStyle(
+              fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+              color: textColor,
+              fontSize: 14.sp,
+            ),
+          ),
+          SizedBox(height: 6.h),
+          if (displayDots.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4.w),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 3.w,
+                runSpacing: 3.h,
+                children: displayDots.map((color) => Container(
+                  // Use .w for both width and height to ensure a perfect circle
+                  width: 6.w,
+                  height: 6.w,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
                   ),
-                ),
+                )).toList(),
               ),
-            )
-            .toList(),
+            ),
+        ],
       ),
     );
   }
