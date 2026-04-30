@@ -1,25 +1,46 @@
 import 'package:flutter/material.dart';
+import 'theme_manager.dart';
 
 class AppColors {
-  // Light Theme
-  static const Color background = Color(0xFFF1F5F9); // Slate-100
-  static const Color surface = Colors.white;
-  static const Color primary = Color(0xFF1E293B); // Slate-800
-  static const Color secondary = Color(0xFF64748B); // Slate-500
-  static const Color accent = Color(0xFF3B82F6); // Blue-500
+  // ================= LIGHT =================
+  static const Color _lightBackground = Color(0xFFF8FAFC);
+  static const Color _lightSurface = Color(0xFFFFFFFF);
+  static const Color _lightPrimary = Color(0xFF0F172A); // Deep slate
+  static const Color _lightSecondary = Color(0xFF64748B); // Muted slate
+  static const Color _lightAccent = Color(0xFF22C55E); // Fresh green (habit success)
 
-  // Dark Theme
-  static const Color darkBackground = Color(0xFF0F172A); // Slate-900
-  static const Color darkSurface = Color(0xFF1E293B); // Slate-800
-  static const Color darkPrimary = Color(0xFFF8FAFC); // Slate-50
-  static const Color darkSecondary = Color(0xFF94A3B8); // Slate-400
+  // ================= DARK =================
+  static const Color _darkBackground = Color(0xFF020617); // Almost black (cleaner than slate)
+  static const Color _darkSurface = Color(0xFF0F172A); // Card surface
+  static const Color _darkPrimary = Color(0xFFF1F5F9); // Soft white
+  static const Color _darkSecondary = Color(0xFF94A3B8); // Muted text
+  static const Color _darkAccent = Color(0xFF4ADE80); // Brighter green for dark
 
+  // ================= SMART ACCESS =================
+  static bool get _isDark => ThemeManager().isDarkMode;
+
+  static Color get background =>
+      _isDark ? _darkBackground : _lightBackground;
+
+  static Color get surface =>
+      _isDark ? _darkSurface : _lightSurface;
+
+  static Color get primary =>
+      _isDark ? _darkPrimary : _lightPrimary;
+
+  static Color get secondary =>
+      _isDark ? _darkSecondary : _lightSecondary;
+
+  static Color get accent =>
+      _isDark ? _darkAccent : _lightAccent;
+
+  // ================= OPTIONAL HABIT COLORS =================
   static const List<Color> palette = [
-    Color(0xFF10B981), // Emerald
-    Color(0xFF6366F1), // Indigo
-    Color(0xFFEC4899), // Pink
-    Color(0xFFF59E0B), // Amber
-    Color(0xFF0EA5E9), // Sky
-    Color(0xFF8B5CF6), // Violet
+    Color(0xFF22C55E), // Green (success)
+    Color(0xFF06B6D4), // Cyan (fresh)
+    Color(0xFF6366F1), // Indigo (focus)
+    Color(0xFFF59E0B), // Amber (energy)
+    Color(0xFFEF4444), // Red (intensity)
+    Color(0xFFA855F7), // Purple (balance)
   ];
 }

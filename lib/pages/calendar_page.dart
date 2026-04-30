@@ -163,11 +163,11 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           IconButton(
             onPressed: () => _changeMonth(-1),
-            icon: const Icon(Icons.chevron_left, color: AppColors.primary),
+            icon:  Icon(Icons.chevron_left, color: AppColors.primary),
           ),
           Text(
             '${_getMonthName(_focusedMonth.month)} ${_focusedMonth.year}',
-            style: const TextStyle(
+            style:  TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.surface,
@@ -175,7 +175,7 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
           IconButton(
             onPressed: () => _changeMonth(1),
-            icon: const Icon(Icons.chevron_right, color: AppColors.primary),
+            icon:  Icon(Icons.chevron_right, color: AppColors.primary),
           ),
         ],
       ),
@@ -195,7 +195,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 child: Text(
                   d,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: AppColors.secondary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,

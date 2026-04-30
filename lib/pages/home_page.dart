@@ -57,8 +57,8 @@ class _HomePageState extends State<HomePage> {
     final completedCount = habit.completedDates.length;
     final streak = _calculateStreak(habit.completedDates);
     final color = Color(habit.colorValue);
-    final bg = isDark ? AppColors.darkSurface : Colors.white;
-    final textMain = isDark ? AppColors.darkPrimary : AppColors.primary;
+    final bg = isDark ? AppColors.surface : Colors.white;
+    final textMain = isDark ? AppColors.primary : AppColors.primary;
 
     showDialog(
       context: context,
@@ -241,10 +241,10 @@ class _HomePageState extends State<HomePage> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: isDark ? AppColors.darkSurface : AppColors.primary,
+        backgroundColor: isDark ? AppColors.surface : AppColors.primary,
         content: Text(
           'Deleted "${habit.name}"',
-          style: TextStyle(color: isDark ? AppColors.darkPrimary : Colors.white),
+          style: TextStyle(color: isDark ? AppColors.primary : Colors.white),
         ),
         action: SnackBarAction(
           label: 'UNDO',
@@ -276,7 +276,7 @@ class _HomePageState extends State<HomePage> {
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return Container(
-          color: isDark ? AppColors.darkBackground : AppColors.background,
+          color: isDark ? AppColors.background : AppColors.background,
           child: Column(
             children: [
               _buildModernHeader(isDark),
@@ -333,7 +333,7 @@ class _HomePageState extends State<HomePage> {
         itemBuilder: (context, index) {
           final cat = HabitCategory.values[index];
           final isSelected = _selectedCategory == cat;
-          final primaryColor = isDark ? AppColors.darkPrimary : AppColors.primary;
+          final primaryColor = isDark ? AppColors.primary : AppColors.primary;
           
           return ChoiceChip(
             label: Text(
@@ -341,7 +341,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? (isDark ? AppColors.darkBackground : Colors.white) : (isDark ? Colors.grey : Colors.grey[600]),
+                color: isSelected ? (isDark ? AppColors.background : Colors.white) : (isDark ? Colors.grey : Colors.grey[600]),
               ),
             ),
             selected: isSelected,
@@ -349,7 +349,7 @@ class _HomePageState extends State<HomePage> {
               if (selected) setState(() => _selectedCategory = cat);
             },
             selectedColor: primaryColor,
-            backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+            backgroundColor: isDark ? AppColors.surface : Colors.white,
             side: BorderSide.none,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           );
@@ -371,7 +371,7 @@ class _HomePageState extends State<HomePage> {
                 'Hello there,',
                 style: TextStyle(
                     fontSize: 16,
-                    color: isDark ? AppColors.darkSecondary : AppColors.secondary,
+                    color: isDark ? AppColors.secondary : AppColors.secondary,
                     fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: 4),
@@ -380,7 +380,7 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.darkPrimary : AppColors.primary,
+                    color: isDark ? AppColors.primary : AppColors.primary,
                     letterSpacing: -0.5),
               ),
             ],
@@ -390,7 +390,7 @@ class _HomePageState extends State<HomePage> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.darkSurface : Colors.white,
+                color: isDark ? AppColors.surface : Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
@@ -402,7 +402,7 @@ class _HomePageState extends State<HomePage> {
               child: Icon(
                   isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
                   size: 20,
-                  color: isDark ? AppColors.darkPrimary : AppColors.primary),
+                  color: isDark ? AppColors.primary : AppColors.primary),
             ),
           ),
         ],
@@ -420,8 +420,8 @@ class _HomePageState extends State<HomePage> {
   }) {
     final streak = _calculateStreak(habit.completedDates);
     final color = Color(habit.colorValue);
-    final cardColor = isDark ? AppColors.darkSurface : Colors.white;
-    final primaryTextColor = isDark ? AppColors.darkPrimary : AppColors.primary;
+    final cardColor = isDark ? AppColors.surface : Colors.white;
+    final primaryTextColor = isDark ? AppColors.primary : AppColors.primary;
 
     return Container(
       key: key,
@@ -473,7 +473,7 @@ class _HomePageState extends State<HomePage> {
                                 color: streak > 0
                                     ? Colors.orange
                                     : (isDark
-                                        ? AppColors.darkSecondary
+                                        ? AppColors.secondary
                                         : AppColors.secondary),
                                 fontWeight: FontWeight.w500)),
                       ],
@@ -599,7 +599,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: (isDark ? AppColors.darkPrimary : AppColors.primary)
+                  color: (isDark ? AppColors.primary : AppColors.primary)
                       .withOpacity(0.5))),
           const SizedBox(height: 8),
           Text('Tap "New Habit" to start',

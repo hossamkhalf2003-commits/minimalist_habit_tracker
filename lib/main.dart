@@ -50,11 +50,11 @@ class _HabitTrackerAppState extends State<HabitTrackerApp> {
           darkTheme: ThemeData(
             useMaterial3: true,
             brightness: Brightness.dark,
-            scaffoldBackgroundColor: AppColors.darkBackground,
+            scaffoldBackgroundColor: AppColors.background,
             colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.darkPrimary,
-              primary: AppColors.darkPrimary,
-              surface: AppColors.darkSurface,
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+              surface: AppColors.surface,
               brightness: Brightness.dark,
             ),
             fontFamily: 'Roboto',

@@ -13,17 +13,17 @@ class ScaffoldWithNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final navBarColor = isDark ? AppColors.darkSurface : Colors.white;
+    final navBarColor = isDark ? AppColors.surface : Colors.white;
     final selectedItemColor =
-        isDark ? AppColors.darkPrimary : AppColors.primary;
+        isDark ? AppColors.primary : AppColors.primary;
     final unselectedItemColor =
-        isDark ? AppColors.darkSecondary : AppColors.secondary;
+        isDark ? AppColors.secondary : AppColors.secondary;
     final fabBackgroundColor =
-        isDark ? AppColors.darkPrimary : AppColors.primary;
-    final fabContentColor = isDark ? AppColors.darkBackground : Colors.white;
+        isDark ? AppColors.primary : AppColors.primary;
+    final fabContentColor = isDark ? AppColors.background : Colors.white;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      backgroundColor: isDark ? AppColors.background : AppColors.background,
       body: child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -114,13 +114,13 @@ class ScaffoldWithNavBar extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
-          final dialogBg = isDark ? AppColors.darkSurface : Colors.white;
-          final textColor = isDark ? AppColors.darkPrimary : AppColors.primary;
+          final dialogBg = isDark ? AppColors.surface : Colors.white;
+          final textColor = isDark ? AppColors.primary : AppColors.primary;
           final inputFill =
-              isDark ? AppColors.darkBackground : AppColors.background;
-          final hintColor = isDark ? AppColors.darkSecondary : Colors.grey;
+              isDark ? AppColors.background : AppColors.background;
+          final hintColor = isDark ? AppColors.secondary : Colors.grey;
           final primaryColor =
-              isDark ? AppColors.darkPrimary : AppColors.primary;
+              isDark ? AppColors.primary : AppColors.primary;
 
           return AlertDialog(
             backgroundColor: dialogBg,
@@ -161,7 +161,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
                     "Frequency",
                     style: TextStyle(
                       color: isDark
-                          ? AppColors.darkSecondary
+                          ? AppColors.secondary
                           : AppColors.secondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -202,7 +202,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
                               // Fix: Ensure text is readable on selected BG
                               color: isSelected
                                   ? (isDark
-                                      ? AppColors.darkBackground
+                                      ? AppColors.background
                                       : Colors.white)
                                   : hintColor,
                               fontSize: 12,
@@ -221,7 +221,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
                     "Category",
                     style: TextStyle(
                       color: isDark
-                          ? AppColors.darkSecondary
+                          ? AppColors.secondary
                           : AppColors.secondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -243,7 +243,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
                             // FIX: If selected in Dark Mode (BG is light), Text must be Dark
                             color: isSelected
                                 ? (isDark
-                                    ? AppColors.darkBackground
+                                    ? AppColors.background
                                     : Colors.white)
                                 : textColor,
                           ),
@@ -268,7 +268,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
                     "Reminder (Optional)",
                     style: TextStyle(
                       color: isDark
-                          ? AppColors.darkSecondary
+                          ? AppColors.secondary
                           : AppColors.secondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -360,9 +360,9 @@ class ScaffoldWithNavBar extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
-                      isDark ? AppColors.darkPrimary : AppColors.primary,
+                      isDark ? AppColors.primary : AppColors.primary,
                   foregroundColor:
-                      isDark ? AppColors.darkBackground : Colors.white,
+                      isDark ? AppColors.background : Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
